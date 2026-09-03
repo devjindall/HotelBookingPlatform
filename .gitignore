@@ -14,6 +14,10 @@ yarn-debug.log*
 yarn-error.log*
 *.log
 
+# Personal Interview Prep (Untracked)
+interview_guide.md
+INTERVIEW_PREP.md
+
 # OS / Editor Files
 .DS_Store
 Thumbs.db
