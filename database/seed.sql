@@ -28,13 +28,13 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- 1. SEED USERS
 -- Default password for all seed accounts is: "password123"
 -- Bcrypt hash generated with 10 salt rounds:
--- $2a$10$wT8Kz5hI0t.9/Bf4gT6xqugZtVbYQW0e3E.zUe8x0fKqYlK6sP8Wy
+-- $2a$10$3SCyrdVUee.sboqWEvR.MOMJCXa73A.hlkgZD9BJzGya853CccAWK
 -- ----------------------------------------------------------------------------
 INSERT INTO users (id, name, email, password_hash) VALUES
-(1, 'Kenji Sato', 'kenji.sato@example.com', '$2a$10$wT8Kz5hI0t.9/Bf4gT6xqugZtVbYQW0e3E.zUe8x0fKqYlK6sP8Wy'),
-(2, 'Aoi Tanaka', 'aoi.tanaka@example.com', '$2a$10$wT8Kz5hI0t.9/Bf4gT6xqugZtVbYQW0e3E.zUe8x0fKqYlK6sP8Wy'),
-(3, 'Alex Morgan', 'alex.morgan@example.com', '$2a$10$wT8Kz5hI0t.9/Bf4gT6xqugZtVbYQW0e3E.zUe8x0fKqYlK6sP8Wy'),
-(4, 'Yuki Takahashi', 'yuki.takahashi@example.com', '$2a$10$wT8Kz5hI0t.9/Bf4gT6xqugZtVbYQW0e3E.zUe8x0fKqYlK6sP8Wy');
+(1, 'Kenji Sato', 'kenji.sato@example.com', '$2a$10$3SCyrdVUee.sboqWEvR.MOMJCXa73A.hlkgZD9BJzGya853CccAWK'),
+(2, 'Aoi Tanaka', 'aoi.tanaka@example.com', '$2a$10$3SCyrdVUee.sboqWEvR.MOMJCXa73A.hlkgZD9BJzGya853CccAWK'),
+(3, 'Alex Morgan', 'alex.morgan@example.com', '$2a$10$3SCyrdVUee.sboqWEvR.MOMJCXa73A.hlkgZD9BJzGya853CccAWK'),
+(4, 'Yuki Takahashi', 'yuki.takahashi@example.com', '$2a$10$3SCyrdVUee.sboqWEvR.MOMJCXa73A.hlkgZD9BJzGya853CccAWK');
 
 -- ----------------------------------------------------------------------------
 -- 2. SEED HOTELS (20 Curated Japanese Properties)
@@ -255,3 +255,4 @@ INSERT INTO bookings (id, user_id, room_id, check_in, check_out, guests, total_p
 
 -- Booking 10: Yuki Takahashi booked Room 8 (Ginza Superior Queen) from 2026-12-30 to 2027-01-02 (3 nights * 22000 = 66000)
 (10, 4, 8, '2026-12-30', '2027-01-02', 2, 66000.00, 'CONFIRMED');
+

@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const { pool, testConnection } = require('./config/db');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
+const authRoutes = require('./routes/authRoutes');
+
 dotenv.config();
 
 const app = express();
@@ -49,8 +51,8 @@ app.get('/api/health', async (req, res, next) => {
   }
 });
 
-// Future Phase Route Mounts will be attached here
-// app.use('/api/auth', authRoutes);
+// Route Mounts
+app.use('/api/auth', authRoutes);
 // app.use('/api/hotels', hotelRoutes);
 // app.use('/api/bookings', bookingRoutes);
 // app.use('/api/ai', aiRoutes);
