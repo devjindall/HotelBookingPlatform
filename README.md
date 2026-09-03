@@ -7,18 +7,18 @@
 [![Tests](https://img.shields.io/badge/Tests-24%2F24%20Passing-15803D?logo=checkmarx&logoColor=white)](./backend/test_integration.js)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> A full-stack hospitality & travel platform engineered to demonstrate **relational database consistency (ACID transactions)**, **mathematical date-interval availability algorithms**, **zero-trust backend pricing**, and a **decoupled multilingual AI recommendation assistant**.
+> A full-stack hotel booking platform built from first principles to demonstrate **relational database consistency (ACID transactions)**, **mathematical date-interval availability algorithms**, **zero-trust backend pricing**, and a **decoupled multilingual AI recommendation assistant**.
 
 ---
 
-## 📌 Executive Summary & Key Highlights
+## 📌 Project Overview & Engineering Highlights
 
-This project was built from scratch without bloated frameworks to ensure every design choice, SQL query, and architecture pattern can be personally defended in technical interviews.
+This application is designed with clean, defensible full-stack software engineering practices:
 
-* 🛡️ **Zero-Trust Backend Pricing**: Frontend never calculates rates. Duration ($nights = \text{check\_out} - \text{check\_in}$) and total cost ($nights \times rate$) are calculated strictly in Express using MySQL records.
-* ⚡ **ACID Transactional Booking (`FOR UPDATE`)**: Prevents race conditions and overbooking when multiple concurrent users attempt to reserve the last physical room unit.
-* 📅 **Mathematical Date Overlap Algorithm**: Resolves booking collisions via $\text{existing.in} < \text{requested.out} \land \text{existing.out} > \text{requested.in}$, seamlessly supporting same-day turnover.
-* 🤖 **Decoupled AI Travel Assistant**: Converts natural language in English & Japanese into validated structured JSON filters. **Zero SQL injection or hallucination risk** — actual records are always fetched from MySQL.
+* 🛡️ **Zero-Trust Backend Pricing**: The client never calculates rates. Stay duration ($nights = \text{check\_out} - \text{check\_in}$) and total cost ($nights \times rate$) are calculated strictly on the backend using database records.
+* ⚡ **ACID Transactional Booking (`FOR UPDATE`)**: Eliminates race conditions and overbooking when multiple users attempt to reserve the last available physical room unit concurrently.
+* 📅 **Mathematical Date Overlap Algorithm**: Resolves date collisions via $\text{existing.in} < \text{requested.out} \land \text{existing.out} > \text{requested.in}$, correctly handling same-day guest turnarounds.
+* 🤖 **Decoupled AI Travel Assistant**: Converts natural language prompts (English & Japanese) into validated structured JSON filters. **Zero SQL injection or hallucination risk** — records are always queried from MySQL.
 * 🔐 **Stateless JWT Authentication & Ownership Guards**: Passwords hashed with salted bcrypt (10 rounds); endpoints strictly verify resource ownership (`req.user.id === booking.user_id`) to block unauthorized cancellations.
 
 ---
@@ -77,21 +77,48 @@ graph TD
            +-----------------------------------------------------------+
 ```
 
-### Foreign Key Constraints & Inventory Model:
-* `rooms.hotel_id -> hotels.id` with `ON DELETE CASCADE`: Deleting a property safely removes its associated room categories.
-* `bookings.user_id -> users.id` with `ON DELETE RESTRICT`: Preserves booking audit history.
-* `bookings.room_id -> rooms.id` with `ON DELETE RESTRICT`: Prevents accidental deletion of rooms tied to historical reservations.
+### Key Foreign Key Constraints:
+* `rooms.hotel_id -> hotels.id` (`ON DELETE CASCADE`): Deleting a property automatically removes its associated room categories.
+* `bookings.user_id -> users.id` (`ON DELETE RESTRICT`): Preserves historical reservation audit trails.
+* `bookings.room_id -> rooms.id` (`ON DELETE RESTRICT`): Prevents deleting rooms tied to historical reservations.
 * **Room Inventory Semantics**: Each row in `rooms` represents a **category** (e.g., *Superior Double Room*), and `total_rooms` specifies the physical unit count.
 
 $$\text{Available Inventory} = \text{total\_rooms} - \text{Active Overlapping Confirmed Bookings}$$
 
 ---
 
-## 🧠 Core Engineering & SQL Deep Dives
+## 💡 Key Architectural Decisions & Engineering Trade-offs
 
-### 1. The Booking Interval Overlap Query
-Two date intervals $[A_{in}, A_{out}]$ and $[B_{in}, B_{out}]$ collide if and only if:
+### 1. Why Relational MySQL over NoSQL?
+> **Design Choice**: Hotel reservations require strict **ACID transactions** and relational integrity. If two guests reserve the last unit simultaneously, MySQL transactions with `FOR UPDATE` row locks guarantee sequential isolation and prevent overbooking. Foreign key constraints prevent orphaned records, and relational JOINs allow efficient aggregation of starting prices and live inventory.
+
+### 2. Concurrency Control with Row-Level Locking
+> **Design Choice**: To eliminate race conditions without external caching layers, the backend wraps booking creation inside a database transaction:
+```sql
+START TRANSACTION;
+
+-- 1. Lock room row to serialize concurrent booking attempts
+SELECT id, price_per_night, total_rooms, capacity 
+FROM rooms 
+WHERE id = ? 
+FOR UPDATE;
+
+-- 2. Count active overlapping confirmed bookings
+SELECT COUNT(*) AS booked_count 
+FROM bookings 
+WHERE room_id = ? 
+  AND status = 'CONFIRMED'
+  AND check_in < ? 
+  AND check_out > ?;
+
+-- 3. If (booked_count >= total_rooms) -> ROLLBACK; return 409 Conflict.
+-- Else -> INSERT INTO bookings (...) VALUES (...); COMMIT; return 201 Created.
+```
+
+### 3. Mathematical Date-Interval Availability Algorithm
+> **Design Choice**: Rather than relying on naive date matching, date collisions are evaluated mathematically:
 $$\text{existing.check\_in} < \text{requested.check\_out} \quad \text{AND} \quad \text{existing.check\_out} > \text{requested.check\_in}$$
+> This correctly accommodates **same-day turnarounds** (Guest A checking out on June 15 and Guest B checking in on June 15 evaluate to `FALSE`, allowing both bookings).
 
 ```sql
 SELECT 
@@ -117,47 +144,11 @@ WHERE r.hotel_id = ?
 ORDER BY r.price_per_night ASC;
 ```
 
----
+### 4. Zero-Trust Backend Rate & Duration Calculation
+> **Design Choice**: In compliance with web application security best practices, the client is never trusted for pricing. The backend queries `price_per_night` directly from the database, computes $nights = \text{check\_out} - \text{check\_in}$, and multiplies $nights \times rate$.
 
-### 2. ACID Concurrency Control with Row Locking
-```sql
-START TRANSACTION;
-
--- 1. Lock room category row to block concurrent race conditions
-SELECT id, price_per_night, total_rooms, capacity 
-FROM rooms 
-WHERE id = ? 
-FOR UPDATE;
-
--- 2. Check active overlapping confirmed bookings
-SELECT COUNT(*) AS booked_count 
-FROM bookings 
-WHERE room_id = ? 
-  AND status = 'CONFIRMED'
-  AND check_in < ? 
-  AND check_out > ?;
-
--- 3. If (booked_count >= total_rooms) -> ROLLBACK with 409 Conflict.
--- Else -> INSERT INTO bookings (...) VALUES (...); COMMIT with 201 Created.
-```
-
----
-
-### 3. Decoupled AI Recommendation Pipeline
-```text
-User Natural Language (EN / JA)
-               ↓
-    POST /api/ai/recommend
-               ↓
-   AI extracts structured JSON
-   {"city": "Tokyo", "guests": 2, "maxPrice": 15000, "breakfast": true}
-               ↓
- Backend validates values & types
-               ↓
-   Parameterized MySQL Query
-               ↓
-    Verified Real Properties
-```
+### 5. Decoupled AI Travel Assistant Architecture
+> **Design Choice**: The AI acts purely as a natural language intent extractor, outputting a structured JSON filter object (`city`, `maxPrice`, `guests`, `breakfast`). The backend validates these attributes and runs parameterized SQL queries. The LLM **never touches raw SQL and cannot invent hotel records**. A built-in regex NLP engine ensures 100% functionality offline without external API keys.
 
 ---
 
@@ -237,36 +228,6 @@ node test_integration.js
 
 ---
 
-## 🎯 Placement Interview Defense & FAQ
-
-<details>
-<summary><strong>Q1: Why MySQL/Relational DB over MongoDB/NoSQL?</strong></summary>
-
-> **Answer**: Booking platforms require strict **ACID transactional guarantees** and relational integrity. If two guests attempt to reserve the last available room at the same time, MySQL transactions with `FOR UPDATE` row locks guarantee sequential isolation and prevent overbooking. Foreign keys (`ON DELETE CASCADE` / `RESTRICT`) prevent orphaned reservation records.
-</details>
-
-<details>
-<summary><strong>Q2: How does the system handle booking collisions and same-day turnover?</strong></summary>
-
-> **Answer**: We use the mathematical interval overlap formula:
-> $$\text{existing.in} < \text{requested.out} \land \text{existing.out} > \text{requested.in}$$
-> If Guest A checks out at 11:00 AM on June 15 and Guest B checks in at 3:00 PM on June 15, the condition $\text{existing.in (June 10)} < \text{requested.out (June 18)}$ is true, but $\text{existing.out (June 15)} > \text{requested.in (June 15)}$ evaluates to `FALSE`. Thus, same-day turnover is correctly recognized as non-overlapping.
-</details>
-
-<details>
-<summary><strong>Q3: Why does the backend calculate booking prices instead of the frontend?</strong></summary>
-
-> **Answer**: Adhering to the **Zero-Trust Security Principle**, client-provided prices must never be trusted as users can tamper with HTTP payloads. The backend calculates $nights = \text{check\_out} - \text{check\_in}$ and multiplies $nights \times rate$ fetched directly from the database.
-</details>
-
-<details>
-<summary><strong>Q4: How does the AI assistant prevent hallucination and SQL injection?</strong></summary>
-
-> **Answer**: The AI is strictly an **intent parser**, not an executor. It outputs a pure JSON object containing structured filters (`city`, `maxPrice`, `guests`, `breakfast`). The backend validates these attributes and runs parameterized SQL queries. The LLM never touches raw SQL and never invents hotel records.
-</details>
-
----
-
 ## 🔑 Demo Test Accounts
 
 | Account | Email | Password | Pre-seeded Notes |
@@ -281,4 +242,4 @@ node test_integration.js
 ## 📄 License & Dataset Attribution
 
 This project is licensed under the [MIT License](LICENSE).  
-The dataset is curated synthetic demo data designed specifically for educational and interview evaluation. Image assets are royalty-free photos from Unsplash.
+The dataset is curated synthetic demo data designed specifically for educational and portfolio demonstration. Image assets are royalty-free photos from Unsplash.
