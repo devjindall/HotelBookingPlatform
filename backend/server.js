@@ -1,12 +1,16 @@
-﻿const express = require('express');
+﻿const path = require('path');
+const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+
+// Ensure .env is resolved relative to backend directory
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+
 const { pool, testConnection } = require('./config/db');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
 const authRoutes = require('./routes/authRoutes');
-
-dotenv.config();
+const hotelRoutes = require('./routes/hotelRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -53,7 +57,7 @@ app.get('/api/health', async (req, res, next) => {
 
 // Route Mounts
 app.use('/api/auth', authRoutes);
-// app.use('/api/hotels', hotelRoutes);
+app.use('/api/hotels', hotelRoutes);
 // app.use('/api/bookings', bookingRoutes);
 // app.use('/api/ai', aiRoutes);
 

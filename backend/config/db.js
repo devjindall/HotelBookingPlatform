@@ -1,7 +1,9 @@
-﻿const mysql = require('mysql2/promise');
+﻿const path = require('path');
+const mysql = require('mysql2/promise');
 const dotenv = require('dotenv');
 
-dotenv.config();
+// Ensure .env is resolved relative to backend directory
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
 // Create connection pool with promise wrapper
 const pool = mysql.createPool({
@@ -13,7 +15,7 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  decimalNumbers: true, // Parse DECIMAL columns as numbers rather than strings
+  decimalNumbers: true,
   timezone: '+00:00'
 });
 
