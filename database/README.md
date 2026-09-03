@@ -102,8 +102,10 @@ In hospitality systems, a row in the `rooms` table represents a **Room Type / In
 - **Example**: Hotel 1 has a record for `Superior Double Room` with `capacity = 2`, `price_per_night = 14000`, and `total_rooms = 6`.
 - This means the hotel has **6 identical physical units** of this category.
 - When evaluating availability for a requested date range:
-  $$\text{Available Inventory} = \text{total\_rooms} - \text{Active Overlapping Confirmed Bookings}$$
-- A new reservation is permitted as long as $\text{Available Inventory} \ge 1$.
+  ```text
+  Available Inventory = total_rooms - Active Overlapping Confirmed Bookings
+  ```
+- A new reservation is permitted as long as `Available Inventory >= 1`.
 
 ---
 
@@ -138,10 +140,12 @@ ORDER BY h.rating DESC;
 ### B. Room Availability Query (The Interval Overlap Formula)
 
 #### The Mathematical Overlap Condition:
-Two date ranges $[A_{in}, A_{out}]$ and $[B_{in}, B_{out}]$ collide **if and only if**:
-$$A_{in} < B_{out} \quad \text{AND} \quad A_{out} > B_{in}$$
+Two date ranges `[check_in_A, check_out_A]` and `[check_in_B, check_out_B]` collide **if and only if**:
+```text
+existing.check_in < requested.check_out AND existing.check_out > requested.check_in
+```
 
-*Note on Turnover*: If a guest checks out on `2026-06-15` and a new guest checks in on `2026-06-15`, the ranges do **not** overlap because the condition $2026\text{-}06\text{-}15 < 2026\text{-}06\text{-}15$ evaluates to `FALSE`.
+*Note on Turnover*: If a guest checks out on `2026-06-15` and a new guest checks in on `2026-06-15`, the ranges do **not** overlap because the condition `2026-06-15 < 2026-06-15` evaluates to `FALSE`.
 
 #### The Inventory Availability SQL Query:
 ```sql

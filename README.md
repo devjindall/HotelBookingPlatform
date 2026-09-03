@@ -15,9 +15,9 @@
 
 This application is designed with clean, defensible full-stack software engineering practices:
 
-* 🛡️ **Zero-Trust Backend Pricing**: The client never calculates rates. Stay duration ($nights = \text{check\_out} - \text{check\_in}$) and total cost ($nights \times rate$) are calculated strictly on the backend using database records.
+* 🛡️ **Zero-Trust Backend Pricing**: The client never calculates rates. Stay duration (`nights = check_out - check_in`) and total cost (`nights * price_per_night`) are calculated strictly on the backend using database records.
 * ⚡ **ACID Transactional Booking (`FOR UPDATE`)**: Eliminates race conditions and overbooking when multiple users attempt to reserve the last available physical room unit concurrently.
-* 📅 **Mathematical Date Overlap Algorithm**: Resolves date collisions via $\text{existing.in} < \text{requested.out} \land \text{existing.out} > \text{requested.in}$, correctly handling same-day guest turnarounds.
+* 📅 **Mathematical Date Overlap Algorithm**: Resolves date collisions via `existing.check_in < requested.check_out AND existing.check_out > requested.check_in`, correctly handling same-day guest turnarounds.
 * 🤖 **Decoupled AI Travel Assistant**: Converts natural language prompts (English & Japanese) into validated structured JSON filters. **Zero SQL injection or hallucination risk** — records are always queried from MySQL.
 * 🔐 **Stateless JWT Authentication & Ownership Guards**: Passwords hashed with salted bcrypt (10 rounds); endpoints strictly verify resource ownership (`req.user.id === booking.user_id`) to block unauthorized cancellations.
 
@@ -83,7 +83,9 @@ graph TD
 * `bookings.room_id -> rooms.id` (`ON DELETE RESTRICT`): Prevents deleting rooms tied to historical reservations.
 * **Room Inventory Semantics**: Each row in `rooms` represents a **category** (e.g., *Superior Double Room*), and `total_rooms` specifies the physical unit count.
 
-$$\text{Available Inventory} = \text{total\_rooms} - \text{Active Overlapping Confirmed Bookings}$$
+```text
+Available Inventory = total_rooms - Active Overlapping Confirmed Bookings
+```
 
 ---
 
@@ -117,7 +119,9 @@ WHERE room_id = ?
 
 ### 3. Mathematical Date-Interval Availability Algorithm
 > **Design Choice**: Rather than relying on naive date matching, date collisions are evaluated mathematically:
-$$\text{existing.check\_in} < \text{requested.check\_out} \quad \text{AND} \quad \text{existing.check\_out} > \text{requested.check\_in}$$
+```text
+existing.check_in < requested.check_out AND existing.check_out > requested.check_in
+```
 > This correctly accommodates **same-day turnarounds** (Guest A checking out on June 15 and Guest B checking in on June 15 evaluate to `FALSE`, allowing both bookings).
 
 ```sql
@@ -145,7 +149,7 @@ ORDER BY r.price_per_night ASC;
 ```
 
 ### 4. Zero-Trust Backend Rate & Duration Calculation
-> **Design Choice**: In compliance with web application security best practices, the client is never trusted for pricing. The backend queries `price_per_night` directly from the database, computes $nights = \text{check\_out} - \text{check\_in}$, and multiplies $nights \times rate$.
+> **Design Choice**: In compliance with web application security best practices, the client is never trusted for pricing. The backend queries `price_per_night` directly from the database, computes `nights = check_out - check_in`, and multiplies `nights * price_per_night`.
 
 ### 5. Decoupled AI Travel Assistant Architecture
 > **Design Choice**: The AI acts purely as a natural language intent extractor, outputting a structured JSON filter object (`city`, `maxPrice`, `guests`, `breakfast`). The backend validates these attributes and runs parameterized SQL queries. The LLM **never touches raw SQL and cannot invent hotel records**. A built-in regex NLP engine ensures 100% functionality offline without external API keys.
