@@ -26,22 +26,22 @@ This application is designed with clean, defensible full-stack software engineer
 ## 🏗️ System Architecture
 
 ```mermaid
-graph TD
-    Client["React Frontend (Vite + SPA)"]
+flowchart TD
+    Client["React Frontend (Vite SPA)"]
     API["Express REST API (Node.js)"]
     AuthMW["JWT Auth & Ownership Middleware"]
     Controllers["Controllers & Business Logic"]
-    AISvc["AI Service (Gemini API + Offline NLP)"]
-    MySQL[("MySQL 8.0 Relational DB")]
+    AISvc["AI Service (Gemini + Local NLP)"]
+    MySQL[("MySQL 8.0 Database")]
 
-    Client -->|HTTP / JSON Requests| API
+    Client -->|"HTTP Requests"| API
     API --> AuthMW
     AuthMW --> Controllers
-    Controllers -->|Parameterized SQL| MySQL
-    Client -->|Natural Language Prompt (EN / JA)| API
+    Controllers -->|"Parameterized SQL"| MySQL
+    Client -->|"Natural Language Prompt"| API
     API --> AISvc
-    AISvc -->|Structured Filter JSON| Controllers
-    Controllers -->|Validate & Query Real Properties| MySQL
+    AISvc -->|"Structured Filter JSON"| Controllers
+    Controllers -->|"Query Real Properties"| MySQL
 ```
 
 ---
