@@ -1,10 +1,5 @@
-﻿-- ============================================================================
--- HOTEL BOOKING PLATFORM - DATABASE SCHEMA
--- ============================================================================
--- Purpose: Relational database schema for hotel discovery and booking.
--- Database: MySQL 8.0+
--- Encoding: UTF-8 (utf8mb4)
--- ============================================================================
+-- HOTEL BOOKING PLATFORM DATABASE SCHEMA
+-- MySQL 8.0+
 
 CREATE DATABASE IF NOT EXISTS hotel_booking_db
   CHARACTER SET utf8mb4
@@ -12,16 +7,12 @@ CREATE DATABASE IF NOT EXISTS hotel_booking_db
 
 USE hotel_booking_db;
 
--- Drop child tables before parent tables to avoid foreign key constraint errors
 DROP TABLE IF EXISTS bookings;
 DROP TABLE IF EXISTS rooms;
 DROP TABLE IF EXISTS hotels;
 DROP TABLE IF EXISTS users;
 
--- ----------------------------------------------------------------------------
--- 1. USERS TABLE
--- Stores registered guest credentials and timestamps.
--- ----------------------------------------------------------------------------
+-- Registered users.
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -29,14 +20,10 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT uq_users_email UNIQUE (email),
-    INDEX idx_users_email (email)
+    CONSTRAINT uq_users_email UNIQUE (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 2. HOTELS TABLE
--- Stores hotel properties, ratings, amenities, and location metadata.
--- ----------------------------------------------------------------------------
+-- Hotel properties and basic search metadata.
 CREATE TABLE hotels (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
@@ -54,14 +41,7 @@ CREATE TABLE hotels (
     INDEX idx_hotels_breakfast (breakfast_available)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 3. ROOMS TABLE (ROOM-TYPE INVENTORY CATEGORIES)
--- NOTE FOR INTERVIEWS:
--- Each row in this table represents a 'room type / inventory category'
--- (e.g., 'Deluxe Twin Room' at a specific hotel).
--- The column `total_rooms` defines how many physical units of this
--- room type exist in the hotel's inventory.
--- ----------------------------------------------------------------------------
+-- A row represents one room type and its available physical units.
 CREATE TABLE rooms (
     id INT AUTO_INCREMENT PRIMARY KEY,
     hotel_id INT NOT NULL,
@@ -81,12 +61,7 @@ CREATE TABLE rooms (
     INDEX idx_rooms_price (price_per_night)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ----------------------------------------------------------------------------
--- 4. BOOKINGS TABLE
--- Stores reservations made by users for specific room types across date ranges.
--- Status values: 'CONFIRMED' or 'CANCELLED'.
--- `total_price` stores the total calculated cost (nights * price_per_night).
--- ----------------------------------------------------------------------------
+-- Reservations for room types over date ranges.
 CREATE TABLE bookings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
