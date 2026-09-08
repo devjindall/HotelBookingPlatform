@@ -1,13 +1,12 @@
 ﻿const jwt = require('jsonwebtoken');
 
 /**
- * JWT Authentication Middleware
- * Validates incoming Bearer token in the Authorization header
- * and attaches verified user payload to `req.user`.
+ * Check the JWT from the Authorization header and attach the
+ * decoded user information to the request.
  */
 function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'] || req.headers['Authorization'];
-  
+  const authHeader = req.headers.authorization;
+
   if (!authHeader) {
     return res.status(401).json({
       success: false,
@@ -18,7 +17,6 @@ function authenticateToken(req, res, next) {
     });
   }
 
-  // Token format: "Bearer <token>"
   const parts = authHeader.split(' ');
   if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') {
     return res.status(401).json({
@@ -31,11 +29,20 @@ function authenticateToken(req, res, next) {
   }
 
   const token = parts[1];
-  const secret = process.env.JWT_SECRET || 'hotel_booking_jwt_super_secret_key_2026_placement_ready';
+  const secret = process.env.JWT_SECRET;
+
+  if (!secret) {
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: 'Server authentication is not configured.',
+        code: 'AUTH_CONFIG_ERROR'
+      }
+    });
+  }
 
   try {
     const decoded = jwt.verify(token, secret);
-    // Attach user payload (id, email, name)
     req.user = decoded;
     next();
   } catch (error) {
