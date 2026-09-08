@@ -1,4 +1,4 @@
-# Komorebi Stays — Hotel Booking Platform
+# Komorebi Stays - Hotel Booking Platform
 
 A full-stack hotel booking application built with React, Node.js, Express, and MySQL.
 
