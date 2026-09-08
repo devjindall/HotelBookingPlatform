@@ -2,7 +2,7 @@
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'hotel_booking_jwt_super_secret_key_2026_placement_ready';
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 /**
@@ -13,7 +13,10 @@ async function register(req, res, next) {
   try {
     const { name, email, password } = req.body;
 
-    // 1. Input Validation
+    if (!JWT_SECRET) {
+      return res.status(500).json({ success: false, error: { message: 'Server authentication is not configured.', code: 'AUTH_CONFIG_ERROR' } });
+    }
+
     if (!name || !name.trim()) {
       return res.status(400).json({
         success: false,
@@ -46,7 +49,6 @@ async function register(req, res, next) {
     const normalizedEmail = email.trim().toLowerCase();
     const trimmedName = name.trim();
 
-    // 2. Check if user already exists
     const [existingUsers] = await pool.query(
       'SELECT id FROM users WHERE email = ?',
       [normalizedEmail]
@@ -59,11 +61,8 @@ async function register(req, res, next) {
       });
     }
 
-    // 3. Hash password
-    const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
+    const passwordHash = await bcrypt.hash(password, 10);
 
-    // 4. Insert into database
     const [insertResult] = await pool.query(
       'INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)',
       [trimmedName, normalizedEmail, passwordHash]
@@ -71,7 +70,6 @@ async function register(req, res, next) {
 
     const newUserId = insertResult.insertId;
 
-    // 5. Generate JWT token
     const token = jwt.sign(
       { id: newUserId, email: normalizedEmail, name: trimmedName },
       JWT_SECRET,
@@ -101,6 +99,10 @@ async function login(req, res, next) {
   try {
     const { email, password } = req.body;
 
+    if (!JWT_SECRET) {
+      return res.status(500).json({ success: false, error: { message: 'Server authentication is not configured.', code: 'AUTH_CONFIG_ERROR' } });
+    }
+
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -110,7 +112,6 @@ async function login(req, res, next) {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // 1. Fetch user from database
     const [users] = await pool.query(
       'SELECT id, name, email, password_hash FROM users WHERE email = ?',
       [normalizedEmail]
@@ -124,9 +125,8 @@ async function login(req, res, next) {
     }
 
     const user = users[0];
-
-    // 2. Compare password
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
@@ -134,7 +134,6 @@ async function login(req, res, next) {
       });
     }
 
-    // 3. Generate JWT token
     const token = jwt.sign(
       { id: user.id, email: user.email, name: user.name },
       JWT_SECRET,
