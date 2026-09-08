@@ -12,39 +12,39 @@ export default function Footer() {
             Komorebi Stays
           </div>
           <p style={{ fontSize: '0.9rem', color: '#94A3B8', lineHeight: 1.6 }}>
-            Curated boutique stays and heritage accommodations across Tokyo, Kyoto, and Osaka. Built with modern full-stack engineering standards.
+            Boutique stays and heritage accommodations across Tokyo, Kyoto, and Osaka.
           </p>
         </div>
 
         <div>
           <h4 style={{ color: '#FFFFFF', fontSize: '1rem', marginBottom: '14px', fontWeight: 600 }}>Destinations</h4>
           <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.9rem' }}>
-            <li><Link to="/hotels?city=Tokyo" style={{ color: '#94A3B8', transition: 'color 0.2s' }}>Tokyo Hotels (8 properties)</Link></li>
-            <li><Link to="/hotels?city=Kyoto" style={{ color: '#94A3B8', transition: 'color 0.2s' }}>Kyoto Ryokans & Machiya (6 properties)</Link></li>
-            <li><Link to="/hotels?city=Osaka" style={{ color: '#94A3B8', transition: 'color 0.2s' }}>Osaka Skyline & Urban Stays (6 properties)</Link></li>
+            <li><Link to="/hotels?city=Tokyo" style={{ color: '#94A3B8', transition: 'color 0.2s' }}>Tokyo Hotels</Link></li>
+            <li><Link to="/hotels?city=Kyoto" style={{ color: '#94A3B8', transition: 'color 0.2s' }}>Kyoto Stays</Link></li>
+            <li><Link to="/hotels?city=Osaka" style={{ color: '#94A3B8', transition: 'color 0.2s' }}>Osaka Stays</Link></li>
           </ul>
         </div>
 
         <div>
-          <h4 style={{ color: '#FFFFFF', fontSize: '1rem', marginBottom: '14px', fontWeight: 600 }}>Core Features</h4>
+          <h4 style={{ color: '#FFFFFF', fontSize: '1rem', marginBottom: '14px', fontWeight: 600 }}>Features</h4>
           <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.9rem' }}>
-            <li><Link to="/hotels" style={{ color: '#94A3B8' }}>Dynamic Multi-Filter Hotel Search</Link></li>
-            <li><Link to="/ai-assistant" style={{ color: '#94A3B8' }}>Multilingual AI Assistant (EN / JA)</Link></li>
-            <li><Link to="/my-bookings" style={{ color: '#94A3B8' }}>Atomic Reservation Management</Link></li>
+            <li><Link to="/hotels" style={{ color: '#94A3B8' }}>Hotel Search</Link></li>
+            <li><Link to="/ai-assistant" style={{ color: '#94A3B8' }}>AI Recommendations</Link></li>
+            <li><Link to="/my-bookings" style={{ color: '#94A3B8' }}>My Bookings</Link></li>
           </ul>
         </div>
 
         <div>
-          <h4 style={{ color: '#FFFFFF', fontSize: '1rem', marginBottom: '14px', fontWeight: 600 }}>Architecture & Tech</h4>
+          <h4 style={{ color: '#FFFFFF', fontSize: '1rem', marginBottom: '14px', fontWeight: 600 }}>Built With</h4>
           <p style={{ fontSize: '0.85rem', color: '#94A3B8', lineHeight: 1.6 }}>
-            React (Vite) • Node.js Express • MySQL • JWT Authentication • Zero-Trust Pricing Logic.
+            React • Node.js • Express • MySQL • JWT
           </p>
         </div>
       </div>
 
       <div className="container" style={{ borderTop: '1px solid #334155', paddingTop: '20px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px', fontSize: '0.82rem', color: '#64748B' }}>
-        <p>© {new Date().getFullYear()} Komorebi Stays - Placement-Ready Hotel Booking Platform.</p>
-        <p>Demo Dataset • Educational & Portfolio Project</p>
+        <p>© {new Date().getFullYear()} Komorebi Stays</p>
+        <p>Demo Dataset • Educational Project</p>
       </div>
     </footer>
   );
