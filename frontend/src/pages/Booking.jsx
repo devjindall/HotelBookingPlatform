@@ -23,7 +23,6 @@ export default function Booking() {
   const [error, setError] = useState(null);
   const [confirmedBooking, setConfirmedBooking] = useState(null);
 
-  // Calculate nights
   const inDate = new Date(checkIn);
   const outDate = new Date(checkOut);
   const nights = Math.max(1, Math.round((outDate.getTime() - inDate.getTime()) / (1000 * 60 * 60 * 24)));
@@ -91,7 +90,6 @@ export default function Booking() {
     );
   }
 
-  // Success Confirmation Screen
   if (confirmedBooking) {
     return (
       <div className="container booking-page-container">
@@ -153,7 +151,7 @@ export default function Booking() {
         <div className="booking-hero-header">
           <h1 className="booking-title">Review & Confirm Your Reservation</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-            Please verify your stay details. Your reservation is processed atomically with zero-trust backend rate calculation.
+            Please verify your stay details before confirming your reservation.
           </p>
         </div>
 
@@ -165,11 +163,10 @@ export default function Booking() {
 
         {hotel && room && (
           <>
-            {/* Hotel Summary Card */}
             <div className="booking-hotel-summary">
-              <img 
-                src={hotel.image_url} 
-                alt={hotel.name} 
+              <img
+                src={hotel.image_url}
+                alt={hotel.name}
                 className="booking-hotel-thumb"
               />
               <div>
@@ -182,7 +179,6 @@ export default function Booking() {
               </div>
             </div>
 
-            {/* Stay Details Grid */}
             <div className="booking-stay-grid">
               <div className="stay-meta-item">
                 <span className="stay-meta-label">Room Type</span>
@@ -202,7 +198,6 @@ export default function Booking() {
               </div>
             </div>
 
-            {/* Transparent Price Breakdown */}
             <div className="booking-price-breakdown">
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '14px', color: 'var(--text-main)' }}>
                 Price Breakdown
@@ -221,9 +216,8 @@ export default function Booking() {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <button 
+              <button
                 onClick={handleConfirmReservation}
                 disabled={submitting}
                 className="btn btn-primary btn-lg"
@@ -234,7 +228,7 @@ export default function Booking() {
 
               <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', textAlign: 'center' }}>
                 <ShieldCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
-                Guaranteed instant confirmation • Free cancellation anytime before check-in.
+                Your booking will be checked for availability before it is confirmed.
               </p>
             </div>
           </>
