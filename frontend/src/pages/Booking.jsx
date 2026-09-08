@@ -2,7 +2,7 @@
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { hotelService, bookingService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Calendar, Users, MapPin, CheckCircle, AlertCircle, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { MapPin, CheckCircle, AlertCircle, ArrowLeft, ShieldCheck } from 'lucide-react';
 import '../styles/booking.css';
 
 export default function Booking() {
