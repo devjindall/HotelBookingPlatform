@@ -1,6 +1,5 @@
 ﻿import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ShieldCheck, MapPin } from 'lucide-react';
 
 export default function Footer() {
   return (
