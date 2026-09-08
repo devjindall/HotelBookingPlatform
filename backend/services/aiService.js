@@ -1,21 +1,18 @@
-﻿const dotenv = require('dotenv');
+const dotenv = require('dotenv');
 const path = require('path');
 
 dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
-/**
- * Local Rule-based Multilingual NLP Parser (Fallback & Offline Engine)
- * Parses natural language in English and Japanese into structured filter preferences.
- */
+const ALLOWED_CITIES = ['Tokyo', 'Kyoto', 'Osaka'];
+
 function localRuleBasedExtract(prompt) {
   const p = prompt.toLowerCase();
-  
+
   let city = null;
   if (p.includes('tokyo') || prompt.includes('東京')) city = 'Tokyo';
   else if (p.includes('kyoto') || prompt.includes('京都')) city = 'Kyoto';
   else if (p.includes('osaka') || prompt.includes('大阪')) city = 'Osaka';
 
-  // Extract Guests count
   let guests = null;
   const guestMatchEn = p.match(/(\d+)\s*(people|person|persons|guests?)/i);
   const guestMatchJa = prompt.match(/(\d+)\s*(人|名)/);
@@ -31,9 +28,7 @@ function localRuleBasedExtract(prompt) {
     guests = 4;
   }
 
-  // Extract Maximum Price
   let maxPrice = null;
-  // Japanese patterns: 1万5千円, 15000円, 2万円, etc.
   if (prompt.includes('1万5千') || prompt.includes('1.5万') || prompt.includes('15,000') || prompt.includes('15000')) {
     maxPrice = 15000;
   } else if (prompt.includes('1万円') || prompt.includes('1万') || prompt.includes('10,000') || prompt.includes('10000')) {
@@ -45,25 +40,20 @@ function localRuleBasedExtract(prompt) {
   } else if (prompt.includes('3万円') || prompt.includes('30,000') || prompt.includes('30000')) {
     maxPrice = 30000;
   } else {
-    // English regex: under ¥15,000, below 12000 yen, < 20000, etc.
     const priceMatch = p.match(/(?:under|below|less than|max|budget of|\<)\s*(?:¥|yen|jpy)?\s*([0-9,]+)/i);
-    if (priceMatch) {
-      maxPrice = parseInt(priceMatch[1].replace(/,/g, ''), 10);
-    }
+    if (priceMatch) maxPrice = parseInt(priceMatch[1].replace(/,/g, ''), 10);
   }
 
-  // Extract Breakfast requirement
   let breakfast = null;
   if (
-    p.includes('breakfast') || 
-    p.includes('morning meal') || 
-    prompt.includes('朝食') || 
+    p.includes('breakfast') ||
+    p.includes('morning meal') ||
+    prompt.includes('朝食') ||
     prompt.includes('モーニング')
   ) {
     breakfast = true;
   }
 
-  // Extract Minimum Rating
   let minRating = null;
   const ratingMatch = p.match(/(\d(?:\.\d)?)\s*(?:stars?|rating|\+)/i);
   if (ratingMatch) {
@@ -73,7 +63,6 @@ function localRuleBasedExtract(prompt) {
     minRating = 4.5;
   }
 
-  // Extract keywords (e.g., station, river, park, castle, traditional)
   let searchKeyword = null;
   if (p.includes('station') || prompt.includes('駅')) searchKeyword = 'Station';
   else if (p.includes('river') || prompt.includes('川')) searchKeyword = 'River';
@@ -84,7 +73,6 @@ function localRuleBasedExtract(prompt) {
   else if (p.includes('shinjuku') || prompt.includes('新宿')) searchKeyword = 'Shinjuku';
   else if (p.includes('ginza') || prompt.includes('銀座')) searchKeyword = 'Ginza';
 
-  // Build summary
   const summaryParts = [];
   if (city) summaryParts.push(`in ${city}`);
   if (guests) summaryParts.push(`for ${guests} guest${guests > 1 ? 's' : ''}`);
@@ -93,7 +81,7 @@ function localRuleBasedExtract(prompt) {
   if (minRating) summaryParts.push(`rated ${minRating}+ stars`);
   if (searchKeyword) summaryParts.push(`near ${searchKeyword}`);
 
-  const summary = summaryParts.length > 0 
+  const summary = summaryParts.length > 0
     ? `Searching for hotels ${summaryParts.join(', ')}`
     : `Showing top recommended hotels`;
 
@@ -109,9 +97,6 @@ function localRuleBasedExtract(prompt) {
   };
 }
 
-/**
- * Extract structured travel preferences using Google Gemini API or fallback parser
- */
 async function extractHotelPreferences(userPrompt) {
   if (!userPrompt || !userPrompt.trim()) {
     return localRuleBasedExtract('');
@@ -119,7 +104,6 @@ async function extractHotelPreferences(userPrompt) {
 
   const apiKey = process.env.GEMINI_API_KEY;
 
-  // If no API key is set, use the robust local multilingual parser directly
   if (!apiKey || apiKey.trim() === '') {
     return localRuleBasedExtract(userPrompt);
   }
@@ -162,22 +146,19 @@ Return ONLY pure JSON. Do not include markdown formatting, backticks, or extra c
     const data = await response.json();
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    if (!rawText) {
-      return localRuleBasedExtract(userPrompt);
-    }
+    if (!rawText) return localRuleBasedExtract(userPrompt);
 
-    // Clean potential markdown wrappers
     const cleanedText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleanedText);
 
     return {
-      city: ['Tokyo', 'Kyoto', 'Osaka'].includes(parsed.city) ? parsed.city : (parsed.city ? parsed.city : null),
+      city: ALLOWED_CITIES.includes(parsed.city) ? parsed.city : null,
       guests: typeof parsed.guests === 'number' && parsed.guests > 0 ? parsed.guests : null,
       maxPrice: typeof parsed.maxPrice === 'number' && parsed.maxPrice > 0 ? parsed.maxPrice : null,
       minRating: typeof parsed.minRating === 'number' && parsed.minRating >= 1 && parsed.minRating <= 5 ? parsed.minRating : null,
       breakfast: typeof parsed.breakfast === 'boolean' ? parsed.breakfast : null,
-      search: typeof parsed.search === 'string' && parsed.search.trim() ? parsed.search.trim() : null,
-      summary: parsed.summary || 'Custom travel recommendations',
+      search: typeof parsed.search === 'string' && parsed.search.trim() ? parsed.search.trim().slice(0, 100) : null,
+      summary: typeof parsed.summary === 'string' && parsed.summary.trim() ? parsed.summary.trim().slice(0, 200) : 'Custom travel recommendations',
       source: 'gemini_api'
     };
   } catch (error) {
